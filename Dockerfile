@@ -1,5 +1,5 @@
 # MiniMax H3 I2V Turbo · Runpod Serverless（slim，模型走 Network Volume）
-# worker-comfyui 5.8.x 默认 ComfyUI 0.29.0，不含原生 MiniMaxH3ImageToVideo（需 ≥0.30.0）
+# worker-comfyui 5.8.x 默认 ComfyUI ~0.29，不含原生 MiniMaxH3ImageToVideo（需 ≥0.30）
 FROM runpod/worker-comfyui:5.8.6-base
 
 SHELL ["/bin/bash", "-lc"]
@@ -8,15 +8,27 @@ ARG COMFYUI_VERSION=v0.33.1
 
 RUN apt-get update -qq && apt-get install -y -qq git ca-certificates curl && rm -rf /var/lib/apt/lists/* || true
 
-# 升级核心 ComfyUI，拿到 MiniMaxH3ImageToVideo / VAEDecodeAudio / CreateVideo / SaveVideo
+# 升级核心 ComfyUI + 同步 /opt/venv 依赖（worker 用 /opt/venv 启动，不是 /comfyui/.venv）
+# v0.33.1 需要 comfy-kitchen>=0.2.31（含 int8_attention_is_available）
 RUN set -euo pipefail; \
     cd /comfyui; \
     test -d .git; \
     git fetch --depth 1 origin tag "${COMFYUI_VERSION}"; \
     git checkout -f FETCH_HEAD; \
     test -f comfy_extras/nodes_minimax_h3.py; \
-    (command -v uv >/dev/null && uv pip install -r requirements.txt) || pip install -r requirements.txt; \
-    python -c "import torchaudio; print('torchaudio', torchaudio.__version__)"
+    PY="${VIRTUAL_ENV:-/opt/venv}/bin/python"; \
+    test -x "$PY"; \
+    if command -v uv >/dev/null; then \
+      uv pip install --python "$PY" -r requirements.txt \
+        "comfy-kitchen==0.2.31" "comfy-aimdo==0.4.13" \
+        "transformers>=4.50.3,<5" "huggingface-hub<1.0"; \
+    else \
+      "$PY" -m pip install -r requirements.txt \
+        "comfy-kitchen==0.2.31" "comfy-aimdo==0.4.13" \
+        "transformers>=4.50.3,<5" "huggingface-hub<1.0"; \
+    fi; \
+    "$PY" -c "import comfy_kitchen as k; assert hasattr(k,'int8_attention_is_available'), k.__file__; import torchaudio; print('ok', k.__version__ if hasattr(k,'__version__') else k.__file__, torchaudio.__version__)"; \
+    cd /comfyui && "$PY" -c "import execution; print('execution import ok')"
 
 RUN comfy node install --exit-on-fail comfyui-art-venture@1.1.3 --mode remote || \
     (echo "WARN: art-venture pin unavailable, latest" >&2 && comfy node install --exit-on-fail comfyui-art-venture --mode remote)
