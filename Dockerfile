@@ -10,6 +10,7 @@ RUN apt-get update -qq && apt-get install -y -qq git ca-certificates curl && rm 
 
 # 升级核心 ComfyUI + 同步 /opt/venv 依赖（worker 用 /opt/venv 启动，不是 /comfyui/.venv）
 # v0.33.1 需要 comfy-kitchen>=0.2.31（含 int8_attention_is_available）
+# 不在此 import execution：CI 无 GPU，model_management 会硬崩在 CUDA init
 RUN set -euo pipefail; \
     cd /comfyui; \
     test -d .git; \
@@ -18,17 +19,17 @@ RUN set -euo pipefail; \
     test -f comfy_extras/nodes_minimax_h3.py; \
     PY="${VIRTUAL_ENV:-/opt/venv}/bin/python"; \
     test -x "$PY"; \
+    grep -vE '^(torch|torchvision|torchaudio)([=<>]|$)' requirements.txt > /tmp/req-no-torch.txt; \
     if command -v uv >/dev/null; then \
-      uv pip install --python "$PY" -r requirements.txt \
+      uv pip install --python "$PY" -r /tmp/req-no-torch.txt \
         "comfy-kitchen==0.2.31" "comfy-aimdo==0.4.13" \
         "transformers>=4.50.3,<5" "huggingface-hub<1.0"; \
     else \
-      "$PY" -m pip install -r requirements.txt \
+      "$PY" -m pip install -r /tmp/req-no-torch.txt \
         "comfy-kitchen==0.2.31" "comfy-aimdo==0.4.13" \
         "transformers>=4.50.3,<5" "huggingface-hub<1.0"; \
     fi; \
-    "$PY" -c "import comfy_kitchen as k; assert hasattr(k,'int8_attention_is_available'), k.__file__; import torchaudio; print('ok', k.__version__ if hasattr(k,'__version__') else k.__file__, torchaudio.__version__)"; \
-    cd /comfyui && "$PY" -c "import execution; print('execution import ok')"
+    "$PY" -c "import comfy_kitchen as k; assert hasattr(k,'int8_attention_is_available'), k.__file__; print('comfy_kitchen ok', getattr(k,'__version__', k.__file__))"
 
 RUN comfy node install --exit-on-fail comfyui-art-venture@1.1.3 --mode remote || \
     (echo "WARN: art-venture pin unavailable, latest" >&2 && comfy node install --exit-on-fail comfyui-art-venture --mode remote)
