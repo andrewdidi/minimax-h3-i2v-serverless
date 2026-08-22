@@ -26,5 +26,6 @@ RUN chmod +x /comfyui/download_models.py /comfyui/verify_models.py \
 
 RUN cp /handler.py /handler.stock.py
 COPY patches/handler_runtime.py /handler.py
+COPY test_input.json /test_input.json
 
 ENTRYPOINT ["/start_with_volume.sh"]
