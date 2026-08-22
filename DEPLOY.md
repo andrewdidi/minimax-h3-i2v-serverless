@@ -45,7 +45,7 @@ ghcr.io/andrewdidi/minimax-h3-i2v-serverless:latest
 bash /comfyui/pod_fill_volume.sh
 ```
 
-5. 日志结尾：`✅ Volume 模型已齐全` · `PASSED`
+5. 日志结尾出现 **`DOWNLOAD_COMPLETE` / `下载完成`**（以及 `PASSED`）即可 Stop Pod；不要一直等 sleep
 6. Stop 临时 Pod（Volume 保留）
 
 ---

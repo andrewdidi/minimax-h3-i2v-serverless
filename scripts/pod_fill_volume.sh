@@ -36,8 +36,10 @@ else
 fi
 
 echo ""
-echo "============================================================"
-echo "[minimax-h3-i2v] ✅ Volume 模型已齐全并通过体积校验"
+echo "############################################################"
+echo "########## DOWNLOAD_COMPLETE ##########"
+echo "下载完成"
+echo "[minimax-h3-i2v] Volume 模型已齐全并通过校验 — 可以 Stop 临时 Pod"
 echo "下一步（Serverless Endpoint）:"
 echo "  1. 关掉本临时 Pod"
 echo "  2. Endpoint 挂载同一 Volume → /runpod-volume"
@@ -46,10 +48,10 @@ echo "       VOLUME_ROOT=/runpod-volume"
 echo "       DOWNLOAD_MODELS_ON_START=0"
 echo "       REQUIRE_MODELS=1"
 echo "  4. Redeploy → 日志应出现: Volume 模型已齐全 → 跳过下载"
-echo "============================================================"
+echo "############################################################"
 
 KEEP_ALIVE="${KEEP_ALIVE:-1}"
 if [[ "$KEEP_ALIVE" == "1" ]]; then
-  echo "[minimax-h3-i2v] KEEP_ALIVE=1 → sleep infinity（确认日志后请 Stop Pod）"
+  echo "[minimax-h3-i2v] KEEP_ALIVE=1 → sleep infinity（已见 DOWNLOAD_COMPLETE 即可 Stop Pod）"
   exec sleep infinity
 fi

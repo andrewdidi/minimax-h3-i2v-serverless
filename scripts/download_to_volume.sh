@@ -33,8 +33,12 @@ echo "[minimax-h3-i2v] 最终校验: python3 verify_models.py --root $VOLUME_ROO
 python3 "$VERIFY" --root "$VOLUME_ROOT" --manifest "$MANIFEST" --strict
 
 echo ""
-echo "[minimax-h3-i2v] ✅ Volume 模型已就绪。"
+echo "############################################################"
+echo "########## DOWNLOAD_COMPLETE ##########"
+echo "下载完成"
+echo "[minimax-h3-i2v] Volume 模型已就绪 — 可以 Stop 临时 Pod"
 echo "[minimax-h3-i2v] Serverless Endpoint 必须设:"
 echo "    VOLUME_ROOT=/runpod-volume"
 echo "    DOWNLOAD_MODELS_ON_START=0"
 echo "    REQUIRE_MODELS=1"
+echo "############################################################"
