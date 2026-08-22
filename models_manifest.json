@@ -1,0 +1,53 @@
+{
+  "workflow": "minimax_h3_i2v_turbo",
+  "notes": [
+    "UNETLoader → models/diffusion_models/MiniMax-H3 (FL2VA pruned int8)",
+    "CLIPLoader / GenerationTail → models/text_encoders/MiniMax-H3 (ethanfel Heretic INT8)",
+    "VAELoader → models/vae/MiniMax-H3 (Comfy-Org video + audio VAE)",
+    "Turbo LoRA → models/loras (t8star 4-step)"
+  ],
+  "models": [
+    {
+      "filename": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+      "relative_path": "models/diffusion_models/MiniMax-H3",
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+      "bytes": 20970379616,
+      "required": true
+    },
+    {
+      "filename": "qwen3vl_32b_h3_ultra_uncensored_heretic_int8_convrot.safetensors",
+      "relative_path": "models/text_encoders/MiniMax-H3",
+      "url": "https://huggingface.co/ethanfel/Qwen3-VL-32B-Ultra-Heretic-H3-ComfyUI-INT8-ConvRot/resolve/main/qwen3vl_32b_h3_ultra_uncensored_heretic_int8_convrot.safetensors",
+      "bytes": 26363476151,
+      "required": true
+    },
+    {
+      "filename": "qwen3vl_32b_h3_generation_tail_50_63_int8_convrot.safetensors",
+      "relative_path": "models/text_encoders/MiniMax-H3",
+      "url": "https://huggingface.co/ethanfel/Qwen3-VL-32B-Ultra-Heretic-H3-ComfyUI-INT8-ConvRot/resolve/main/qwen3vl_32b_h3_generation_tail_50_63_int8_convrot.safetensors",
+      "bytes": 7609128707,
+      "required": true
+    },
+    {
+      "filename": "minimax_h3_video_vae_fp16.safetensors",
+      "relative_path": "models/vae/MiniMax-H3",
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors",
+      "bytes": 5207808496,
+      "required": true
+    },
+    {
+      "filename": "minimax_h3_audio_vae_fp32.safetensors",
+      "relative_path": "models/vae/MiniMax-H3",
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors",
+      "bytes": 605254808,
+      "required": true
+    },
+    {
+      "filename": "minimax_h3_turbo_v4_step600_comfyui_T8-convert.safetensors",
+      "relative_path": "models/loras",
+      "url": "https://huggingface.co/t8star/minimax-h3-4step-turbo-loras-comfyui-exp/resolve/main/minimax_h3_turbo_v4_step600_comfyui_T8-convert.safetensors",
+      "bytes": 779858903,
+      "required": true
+    }
+  ]
+}

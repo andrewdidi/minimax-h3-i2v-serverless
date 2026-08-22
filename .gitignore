@@ -1,0 +1,8 @@
+output/
+volume_models/
+request.json
+result.json
+__pycache__/
+*.pyc
+.DS_Store
+._*

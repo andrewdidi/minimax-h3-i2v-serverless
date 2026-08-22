@@ -1,0 +1,15 @@
+{
+  "input": {
+    "workflow": "用 build_request.py 生成完整 workflow；勿直接提交本文件",
+    "images": [{ "name": "first_frame.jpg", "image": "data:image/jpeg;base64,<BASE64>" }]
+  },
+  "_contract": {
+    "LoadImage_first": "50 → first_frame.jpg",
+    "LoadImage_last": "51 → last_frame.jpg（可选）",
+    "prompt": "122 manual_prompt → 104（或 --skip-enhancer 直写 104）",
+    "turbo_lora": "7 strength 1.0",
+    "scheduler": "9 steps=4",
+    "duration_frames": "111 duration → 107 公式 → 104 length",
+    "save_video": "92 video/minimax_h3_i2v"
+  }
+}
