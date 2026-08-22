@@ -55,7 +55,8 @@ DOWNLOAD_MODELS_ON_START=0
 REQUIRE_MODELS=1
 ```
 
-## 自定义节点
+## ComfyUI / 自定义节点
 
-- `ComfyUI-MiniMax-H3-Guide`（PromptEnhancer / I2V 节点）
-- `comfyui-art-venture`（ComfyMathExpression）
+- 镜像内 ComfyUI **≥0.30**（当前 pin `v0.33.1`）：原生 `MiniMaxH3ImageToVideo` / `VAEDecodeAudio` / `CreateVideo` / `SaveVideo`
+- `ComfyUI-MiniMax-H3-Guide`：`MiniMaxH3PromptEnhancer` / `MiniMaxH3GenerationTailLoader`
+- `comfyui-art-venture`：`ComfyMathExpression`
