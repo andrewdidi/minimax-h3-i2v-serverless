@@ -29,7 +29,16 @@ RUN set -euo pipefail; \
         "comfy-kitchen==0.2.31" "comfy-aimdo==0.4.13" \
         "transformers>=4.50.3,<5" "huggingface-hub<1.0"; \
     fi; \
-    "$PY" -c "import comfy_kitchen as k; assert hasattr(k,'int8_attention_is_available'), k.__file__; print('comfy_kitchen ok', getattr(k,'__version__', k.__file__))"
+    if command -v uv >/dev/null; then \
+      uv pip install --python "$PY" --force-reinstall \
+        torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 \
+        --index-url https://download.pytorch.org/whl/cu128; \
+    else \
+      "$PY" -m pip install --force-reinstall \
+        torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 \
+        --index-url https://download.pytorch.org/whl/cu128; \
+    fi; \
+    "$PY" -c "import torch, comfy_kitchen as k; assert hasattr(k,'int8_attention_is_available'); assert '12.8' in torch.version.cuda or torch.version.cuda.startswith('12.8'); print('torch', torch.__version__, 'cuda', torch.version.cuda, 'kitchen', getattr(k,'__version__', 'ok'))"
 
 RUN comfy node install --exit-on-fail comfyui-art-venture@1.1.3 --mode remote || \
     (echo "WARN: art-venture pin unavailable, latest" >&2 && comfy node install --exit-on-fail comfyui-art-venture --mode remote)
