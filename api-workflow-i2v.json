@@ -10,11 +10,11 @@
   "7": {
     "inputs": {
       "model": ["6", 0],
-      "lora_name": "minimax_h3_turbo_v4_step600_comfyui_T8-convert.safetensors",
+      "lora_name": "minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors",
       "strength_model": 1.0
     },
     "class_type": "LoraLoaderModelOnly",
-    "_meta": { "title": "Turbo LoRA 4-step" }
+    "_meta": { "title": "Turbo LoRA v4 pruned (drbaph)" }
   },
   "13": {
     "inputs": {

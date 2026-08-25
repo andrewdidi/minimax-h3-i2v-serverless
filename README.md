@@ -27,9 +27,10 @@ ghcr.io/andrewdidi/minimax-h3-i2v-serverless:latest
   text_encoders/MiniMax-H3/qwen3vl_32b_h3_generation_tail_50_63_int8_convrot.safetensors
   vae/MiniMax-H3/minimax_h3_video_vae_fp16.safetensors
   vae/MiniMax-H3/minimax_h3_audio_vae_fp32.safetensors
-  loras/minimax_h3_turbo_v4_step600_comfyui_T8-convert.safetensors
+  loras/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors
 ```
 
+> Turbo LoRA 使用 **drbaph pruned 兼容版**（与 FL2VA `pruned_int8` 基座匹配）。勿用 t8star 的非 pruned `T8-convert`（会 AdaLN shape 报错并打崩 ComfyUI）。
 ## 调用
 
 ```bash

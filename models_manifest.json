@@ -4,7 +4,7 @@
     "UNETLoader → models/diffusion_models/MiniMax-H3 (FL2VA pruned int8)",
     "CLIPLoader / GenerationTail → models/text_encoders/MiniMax-H3 (ethanfel Heretic INT8)",
     "VAELoader → models/vae/MiniMax-H3 (Comfy-Org video + audio VAE)",
-    "Turbo LoRA → models/loras (t8star 4-step)"
+    "Turbo LoRA → models/loras (drbaph pruned-compatible v4 step600 EMA)"
   ],
   "models": [
     {
@@ -43,10 +43,10 @@
       "required": true
     },
     {
-      "filename": "minimax_h3_turbo_v4_step600_comfyui_T8-convert.safetensors",
+      "filename": "minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors",
       "relative_path": "models/loras",
-      "url": "https://huggingface.co/t8star/minimax-h3-4step-turbo-loras-comfyui-exp/resolve/main/minimax_h3_turbo_v4_step600_comfyui_T8-convert.safetensors",
-      "bytes": 779858903,
+      "url": "https://huggingface.co/drbaph/MiniMax-H3-Turbo-Lora-ComfyUI/resolve/main/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors",
+      "bytes": 620285592,
       "required": true
     }
   ]
