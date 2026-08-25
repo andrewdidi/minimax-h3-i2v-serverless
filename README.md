@@ -60,4 +60,4 @@ REQUIRE_MODELS=1
 
 - 镜像内 ComfyUI **≥0.30**（当前 pin `v0.33.1`）：原生 `MiniMaxH3ImageToVideo` / `VAEDecodeAudio` / `CreateVideo` / `SaveVideo`
 - `ComfyUI-MiniMax-H3-Guide`：`MiniMaxH3PromptEnhancer` / `MiniMaxH3GenerationTailLoader`
-- `comfyui-art-venture`：`ComfyMathExpression`
+- `comfyui-art-venture`：`ComfyMathExpression`（镜像内含 `opencv-python-headless`）

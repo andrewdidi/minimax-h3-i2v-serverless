@@ -42,6 +42,22 @@ RUN set -euo pipefail; \
 
 RUN comfy node install --exit-on-fail comfyui-art-venture@1.1.3 --mode remote || \
     (echo "WARN: art-venture pin unavailable, latest" >&2 && comfy node install --exit-on-fail comfyui-art-venture --mode remote)
+# art-venture 需要 cv2（ComfyMathExpression）；缺则整包 IMPORT FAILED
+RUN set -euo pipefail; \
+    PY="${VIRTUAL_ENV:-/opt/venv}/bin/python"; \
+    if command -v uv >/dev/null; then \
+      uv pip install --python "$PY" "opencv-python-headless>=4.8"; \
+    else \
+      "$PY" -m pip install "opencv-python-headless>=4.8"; \
+    fi; \
+    if [[ -f /comfyui/custom_nodes/comfyui-art-venture/requirements.txt ]]; then \
+      if command -v uv >/dev/null; then \
+        uv pip install --python "$PY" -r /comfyui/custom_nodes/comfyui-art-venture/requirements.txt || true; \
+      else \
+        "$PY" -m pip install -r /comfyui/custom_nodes/comfyui-art-venture/requirements.txt || true; \
+      fi; \
+    fi; \
+    "$PY" -c "import cv2; print('cv2', cv2.__version__)"
 RUN git clone --depth 1 https://github.com/ethanfel/ComfyUI-MiniMax-H3-Guide /comfyui/custom_nodes/ComfyUI-MiniMax-H3-Guide
 
 COPY api-workflow-i2v.json /comfyui/workflow_api.json
