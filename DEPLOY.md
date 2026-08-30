@@ -31,10 +31,18 @@ Package 设为 Public、配置 Registry Auth **都不能根治**。
 
 | 用途 | 地址 |
 |------|------|
-| **RunPod Serverless（必用）** | `andrewdidi/minimax-h3-i2v-serverless:latest` |
+| **RunPod Serverless（必用）** | `<你的Hub用户名>/minimax-h3-i2v-serverless:latest`（与签发 Token 的账号一致） |
 | 备用 / CI 产物 | `ghcr.io/andrewdidi/minimax-h3-i2v-serverless:latest` |
 
-Actions 已双推；仓库需配置 Secrets：`DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`（Hub Access Token）。
+Actions 双推；Secrets 推荐：
+
+| Secret | 值 |
+|--------|-----|
+| `DOCKERHUB_USERNAME` | Docker Hub **用户名**（登录 hub.docker.com 右上角显示的那个） |
+| `DOCKERHUB_TOKEN` | Access Token（`dckr_pat_…` 整串） |
+
+兼容旧名：`AGRICARETK`=用户名、`DCKR_PAT_…`=Token。  
+**GitHub 用户 `andrewdidi` ≠ 自动等于 Hub 用户名**；用户名与 Token 不属于同一 Hub 账号时会报 `unauthorized`。
 
 ---
 

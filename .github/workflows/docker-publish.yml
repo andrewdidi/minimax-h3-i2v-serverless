@@ -1,7 +1,7 @@
 name: Build and push Docker image
 
-# RunPod 从 GHCR 拉镜像易触发 toomanyrequests（机房共享出口 IP）。
-# 彻底方案：同时推 Docker Hub，Endpoint 改用 docker.io/...（见 DEPLOY.md）。
+# RunPod 从 GHCR 拉易 toomanyrequests → 双推 Docker Hub（见 DEPLOY.md）。
+# Hub 登录用户名必须与签发 Token 的账号一致（常见：Hub 用户 ≠ GitHub andrewdidi）。
 
 on:
   push:
@@ -11,8 +11,6 @@ on:
 
 env:
   GHCR_IMAGE: ghcr.io/andrewdidi/minimax-h3-i2v-serverless
-  # Docker Hub：RunPod Serverless 推荐镜像（需仓库 Secrets: DOCKERHUB_USERNAME / DOCKERHUB_TOKEN）
-  DH_IMAGE: andrewdidi/minimax-h3-i2v-serverless
 
 jobs:
   build-push:
@@ -42,12 +40,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 兼容：标准名 DOCKERHUB_*，或误用 Docker Hub 默认名 DCKR_PAT_* 的 Secret
+      # 用户名：DOCKERHUB_USERNAME 或 AGRICARETK（勿再用写死的 andrewdidi）
+      # Token：DOCKERHUB_TOKEN 或 DCKR_PAT_*
+      - name: Resolve Docker Hub user
+        id: hub
+        env:
+          U: ${{ secrets.DOCKERHUB_USERNAME || secrets.AGRICARETK }}
+          P: ${{ secrets.DOCKERHUB_TOKEN || secrets.DCKR_PAT_YJJSDO7JVVCNEXX9FAPKGAAOWRW }}
+        run: |
+          U="$(printf '%s' "$U" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          if [ -z "$U" ] || [ -z "$P" ]; then
+            echo "::error::缺少 Hub 凭证。请设置 DOCKERHUB_USERNAME + DOCKERHUB_TOKEN（或 AGRICARETK=用户名 + DCKR_PAT_*=token）。"
+            exit 1
+          fi
+          if [ "$U" = "andrewdidi" ]; then
+            echo "::warning::登录用户名为 andrewdidi。若 Token 属于其它 Hub 账号，会 unauthorized。"
+          fi
+          echo "user=$U" >> "$GITHUB_OUTPUT"
+          echo "Docker Hub namespace user=$U"
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_USERNAME || 'andrewdidi' }}
-          password: ${{ secrets.DOCKERHUB_TOKEN != '' && secrets.DOCKERHUB_TOKEN || secrets.DCKR_PAT_YJJSDO7JVVCNEXX9FAPKGAAOWRW }}
+          username: ${{ steps.hub.outputs.user }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DCKR_PAT_YJJSDO7JVVCNEXX9FAPKGAAOWRW }}
 
       - name: Docker metadata
         id: meta
@@ -55,7 +71,7 @@ jobs:
         with:
           images: |
             ${{ env.GHCR_IMAGE }}
-            ${{ env.DH_IMAGE }}
+            ${{ steps.hub.outputs.user }}/minimax-h3-i2v-serverless
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=sha-
