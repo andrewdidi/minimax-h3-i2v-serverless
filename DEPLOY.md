@@ -10,7 +10,7 @@
 |---|--------|----------|
 | 1 | Volume | ≥ **120GB**，挂载 **`/runpod-volume`** |
 | 2 | 六个权重 | `verify_models.py --strict` → `PASSED` |
-| 3 | 镜像 | **`andrewdidi/minimax-h3-i2v-serverless:latest`**（Docker Hub，**不要用 GHCR**） |
+| 3 | 镜像 | **Docker Hub** `<Hub用户名>/minimax-h3-i2v-serverless:latest`（**不要用 GHCR**） |
 | 4 | Endpoint 环境变量 | `VOLUME_ROOT` · `DOWNLOAD_MODELS_ON_START=0` · `REQUIRE_MODELS=1` |
 | 5 | Worker 日志 | `Volume 模型已齐全 → 跳过下载` · `prepare_volume_models OK` |
 
@@ -57,16 +57,16 @@ RunPod → Storage → Network Volume → 同区域 ≥ **120GB**。
 推送本仓库 `main` → GitHub Actions 构建并推送 **Docker Hub + GHCR**。
 
 ```text
-andrewdidi/minimax-h3-i2v-serverless:latest
+<Hub用户名>/minimax-h3-i2v-serverless:latest
 ```
 
-Endpoint / Template 的 Container Image **只填上面这一行**（或 `docker.io/andrewdidi/minimax-h3-i2v-serverless:latest`）。
+Endpoint / Template 的 Container Image **只填上面这一行**（与 CI 推送的命名空间一致；勿填 `ghcr.io/...`）。
 
 ---
 
 ## 步骤 3 · 临时 Pod 填盘
 
-1. Pod 镜像：`andrewdidi/minimax-h3-i2v-serverless:latest`
+1. Pod 镜像：`<Hub用户名>/minimax-h3-i2v-serverless:latest`
 2. 挂载 Volume → `/runpod-volume`
 3. 环境变量：`VOLUME_ROOT=/runpod-volume` · `HF_TOKEN=hf_xxx`（可选）
 4. **Start Command**：
@@ -83,7 +83,7 @@ bash /comfyui/pod_fill_volume.sh
 ## 步骤 4 · Serverless Endpoint
 
 1. 同一 Volume → `/runpod-volume`
-2. **Container Image**：`andrewdidi/minimax-h3-i2v-serverless:latest`（勿填 ghcr.io）
+2. **Container Image**：`<Hub用户名>/minimax-h3-i2v-serverless:latest`（勿填 ghcr.io）
 3. 环境变量：
 
 ```text
