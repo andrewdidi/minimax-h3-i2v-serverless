@@ -1,7 +1,6 @@
 name: Build and push Docker image
 
-# RunPod 从 GHCR 拉易 toomanyrequests → 双推 Docker Hub（见 DEPLOY.md）。
-# Hub 登录用户名必须与签发 Token 的账号一致（常见：Hub 用户 ≠ GitHub andrewdidi）。
+# RunPod 拉 GHCR 易 toomanyrequests → 双推 Docker Hub（见 DEPLOY.md）。
 
 on:
   push:
@@ -40,30 +39,38 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 用户名：DOCKERHUB_USERNAME 或 AGRICARETK（勿再用写死的 andrewdidi）
-      # Token：DOCKERHUB_TOKEN 或 DCKR_PAT_*
-      - name: Resolve Docker Hub user
-        id: hub
+      # 清洗换行；校验未对调；stdin 登录（避免 malformed Authorization）
+      - name: Log in to Docker Hub
         env:
-          U: ${{ secrets.DOCKERHUB_USERNAME || secrets.AGRICARETK }}
-          P: ${{ secrets.DOCKERHUB_TOKEN || secrets.DCKR_PAT_YJJSDO7JVVCNEXX9FAPKGAAOWRW }}
+          RAW_USER: ${{ secrets.DOCKERHUB_USERNAME || secrets.AGRICARETK }}
+          RAW_PASS: ${{ secrets.DOCKERHUB_TOKEN || secrets.DCKR_PAT_YJJSDO7JVVCNEXX9FAPKGAAOWRW }}
         run: |
-          U="$(printf '%s' "$U" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-          if [ -z "$U" ] || [ -z "$P" ]; then
-            echo "::error::缺少 Hub 凭证。请设置 DOCKERHUB_USERNAME + DOCKERHUB_TOKEN（或 AGRICARETK=用户名 + DCKR_PAT_*=token）。"
+          set -euo pipefail
+          USER="$(printf '%s' "${RAW_USER:-}" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          PASS="$(printf '%s' "${RAW_PASS:-}" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+
+          echo "hub_user_len=${#USER} hub_pass_len=${#PASS}"
+          if [ -z "$USER" ] || [ -z "$PASS" ]; then
+            echo "::error::Hub 用户名或 Token 为空。请 gh secret set DOCKERHUB_USERNAME / DOCKERHUB_TOKEN"
             exit 1
           fi
-          if [ "$U" = "andrewdidi" ]; then
-            echo "::warning::登录用户名为 andrewdidi。若 Token 属于其它 Hub 账号，会 unauthorized。"
+          if [[ "$USER" == dckr_pat_* ]] || [[ "$USER" == DCKR_PAT_* ]]; then
+            echo "::error::用户名 Secret 里像是 Token（dckr_pat_ 开头）。请把 Hub 用户名和 Token 对调重设。"
+            exit 1
           fi
-          echo "user=$U" >> "$GITHUB_OUTPUT"
-          echo "Docker Hub namespace user=$U"
+          if [ "${#USER}" -gt 64 ]; then
+            echo "::error::用户名过长(${#USER})，多半把 Token 填进了用户名 Secret。"
+            exit 1
+          fi
+          if [ "${#PASS}" -lt 20 ]; then
+            echo "::error::Token 过短(${#PASS})。请粘贴 Docker Hub 创建 Token 时显示的完整密钥，不是 Token 的名字。"
+            exit 1
+          fi
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ steps.hub.outputs.user }}
-          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DCKR_PAT_YJJSDO7JVVCNEXX9FAPKGAAOWRW }}
+          echo "$PASS" | docker login -u "$USER" --password-stdin
+          echo "user=$USER" >> "$GITHUB_OUTPUT"
+          echo "Docker Hub login OK as user_len=${#USER}"
+        id: hub
 
       - name: Docker metadata
         id: meta
