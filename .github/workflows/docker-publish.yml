@@ -1,5 +1,8 @@
 name: Build and push Docker image
 
+# RunPod 从 GHCR 拉镜像易触发 toomanyrequests（机房共享出口 IP）。
+# 彻底方案：同时推 Docker Hub，Endpoint 改用 docker.io/...（见 DEPLOY.md）。
+
 on:
   push:
     branches: [main]
@@ -7,8 +10,9 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: andrewdidi/minimax-h3-i2v-serverless
+  GHCR_IMAGE: ghcr.io/andrewdidi/minimax-h3-i2v-serverless
+  # Docker Hub：RunPod Serverless 推荐镜像（需仓库 Secrets: DOCKERHUB_USERNAME / DOCKERHUB_TOKEN）
+  DH_IMAGE: andrewdidi/minimax-h3-i2v-serverless
 
 jobs:
   build-push:
@@ -34,22 +38,30 @@ jobs:
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: |
+            ${{ env.GHCR_IMAGE }}
+            ${{ env.DH_IMAGE }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=sha-
             type=ref,event=tag
             type=raw,value={{date 'YYYYMMDD-HHmmss'}},enable={{is_default_branch}}
 
-      - name: Build and push (slim Dockerfile)
+      - name: Build and push (slim Dockerfile → GHCR + Docker Hub)
         uses: docker/build-push-action@v6
         with:
           context: .
