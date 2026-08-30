@@ -2,13 +2,13 @@
 
 上传 **首帧 + 提示词** → MiniMax H3 **FL2VA 图生视频+音频**（4-step Turbo LoRA + PromptEnhancer）。
 
-## 镜像（RunPod 请用 Docker Hub）
+## 镜像（RunPod 请用 Docker Hub 短名）
 
 ```text
-andrewdidi/minimax-h3-i2v-serverless:latest
+<Hub用户名>/minimax-h3:latest
 ```
 
-> 勿用 `ghcr.io/...`：RunPod 拉 GHCR 易 `toomanyrequests`。CI 双推 Hub + GHCR，说明见 [DEPLOY.md](./DEPLOY.md)。
+> 已换短名 `minimax-h3`。勿用 `ghcr.io/...`。CI / Secrets 见 [DEPLOY.md](./DEPLOY.md)。
 
 部署步骤见 **[DEPLOY.md](./DEPLOY.md)**。
 

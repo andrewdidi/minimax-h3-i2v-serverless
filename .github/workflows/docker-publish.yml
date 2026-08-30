@@ -1,6 +1,8 @@
 name: Build and push Docker image
 
-# RunPod 拉 GHCR 易 toomanyrequests → 双推 Docker Hub（见 DEPLOY.md）。
+# GHCR 始终推送（短名 minimax-h3）。
+# Docker Hub 仅在 DOCKERHUB_USERNAME + DOCKERHUB_TOKEN 正确时推送；失败不阻断 GHCR。
+# RunPod 请用 Hub：<user>/minimax-h3:latest（勿用旧长名 / 勿用 ghcr）。
 
 on:
   push:
@@ -9,7 +11,10 @@ on:
   workflow_dispatch:
 
 env:
-  GHCR_IMAGE: ghcr.io/andrewdidi/minimax-h3-i2v-serverless
+  # 新短名（换名推送）
+  GHCR_IMAGE: ghcr.io/andrewdidi/minimax-h3
+  # 旧名保留一层，避免已有引用立刻断
+  GHCR_IMAGE_LEGACY: ghcr.io/andrewdidi/minimax-h3-i2v-serverless
 
 jobs:
   build-push:
@@ -39,59 +44,79 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 清洗换行；校验未对调；stdin 登录（避免 malformed Authorization）
-      - name: Log in to Docker Hub
+      - name: Check Docker Hub secrets (DOCKERHUB_* only)
+        id: hubcheck
         env:
-          RAW_USER: ${{ secrets.DOCKERHUB_USERNAME || secrets.AGRICARETK }}
-          RAW_PASS: ${{ secrets.DOCKERHUB_TOKEN || secrets.DCKR_PAT_YJJSDO7JVVCNEXX9FAPKGAAOWRW }}
+          U: ${{ secrets.DOCKERHUB_USERNAME }}
+          P: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          U="$(printf '%s' "${U:-}" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          P="$(printf '%s' "${P:-}" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          ok=false
+          if [ -n "$U" ] && [ -n "$P" ] && [[ "$U" != dckr_pat_* ]] && [ "${#U}" -le 64 ] && [ "${#P}" -ge 20 ]; then
+            ok=true
+            echo "user=$U" >> "$GITHUB_OUTPUT"
+            echo "Hub secrets look usable (user_len=${#U} pass_len=${#P})"
+          else
+            echo "Hub secrets missing or invalid — will push GHCR only."
+            echo "Set DOCKERHUB_USERNAME + DOCKERHUB_TOKEN (do NOT reuse AGRICARETK / DCKR_PAT_*)."
+          fi
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to Docker Hub
+        if: steps.hubcheck.outputs.ok == 'true'
+        env:
+          U: ${{ secrets.DOCKERHUB_USERNAME }}
+          P: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
-          USER="$(printf '%s' "${RAW_USER:-}" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-          PASS="$(printf '%s' "${RAW_PASS:-}" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-
-          echo "hub_user_len=${#USER} hub_pass_len=${#PASS}"
-          if [ -z "$USER" ] || [ -z "$PASS" ]; then
-            echo "::error::Hub 用户名或 Token 为空。请 gh secret set DOCKERHUB_USERNAME / DOCKERHUB_TOKEN"
-            exit 1
-          fi
-          if [[ "$USER" == dckr_pat_* ]] || [[ "$USER" == DCKR_PAT_* ]]; then
-            echo "::error::用户名 Secret 里像是 Token（dckr_pat_ 开头）。请把 Hub 用户名和 Token 对调重设。"
-            exit 1
-          fi
-          if [ "${#USER}" -gt 64 ]; then
-            echo "::error::用户名过长(${#USER})，多半把 Token 填进了用户名 Secret。"
-            exit 1
-          fi
-          if [ "${#PASS}" -lt 20 ]; then
-            echo "::error::Token 过短(${#PASS})。请粘贴 Docker Hub 创建 Token 时显示的完整密钥，不是 Token 的名字。"
-            exit 1
-          fi
-
+          USER="$(printf '%s' "$U" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          PASS="$(printf '%s' "$P" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
           echo "$PASS" | docker login -u "$USER" --password-stdin
-          echo "user=$USER" >> "$GITHUB_OUTPUT"
-          echo "Docker Hub login OK as user_len=${#USER}"
-        id: hub
+          echo "Docker Hub login OK"
 
-      - name: Docker metadata
-        id: meta
+      - name: Docker metadata (GHCR always)
+        id: meta_ghcr
         uses: docker/metadata-action@v5
         with:
           images: |
             ${{ env.GHCR_IMAGE }}
-            ${{ steps.hub.outputs.user }}/minimax-h3-i2v-serverless
+            ${{ env.GHCR_IMAGE_LEGACY }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=sha-
             type=ref,event=tag
-            type=raw,value={{date 'YYYYMMDD-HHmmss'}},enable={{is_default_branch}}
 
-      - name: Build and push (slim Dockerfile → GHCR + Docker Hub)
+      - name: Docker metadata (Hub short name)
+        id: meta_hub
+        if: steps.hubcheck.outputs.ok == 'true'
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.hubcheck.outputs.user }}/minimax-h3
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-
+            type=ref,event=tag
+
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ steps.meta_ghcr.outputs.tags }}
+            ${{ steps.meta_hub.outputs.tags }}
+          labels: ${{ steps.meta_ghcr.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "### Images" >> "$GITHUB_STEP_SUMMARY"
+          echo "- GHCR: \`${{ env.GHCR_IMAGE }}:latest\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.hubcheck.outputs.ok }}" = "true" ]; then
+            echo "- Docker Hub: \`${{ steps.hubcheck.outputs.user }}/minimax-h3:latest\` ← **RunPod 用这个**" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Docker Hub: skipped（请设置 Secrets \`DOCKERHUB_USERNAME\` + \`DOCKERHUB_TOKEN\`）" >> "$GITHUB_STEP_SUMMARY"
+          fi
